@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Plan de Ahorro — Visual</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* dark navy */
+      --card:#0b1220;
+      --accent1:#7c3aed; /* purple */
+      --accent2:#06b6d4; /* teal */
+      --glass: rgba(255,255,255,0.04);
+      --muted: #9aa4bf;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: radial-gradient(1200px 600px at 10% 10%, rgba(124,58,237,0.12), transparent), radial-gradient(1000px 500px at 90% 90%, rgba(6,182,212,0.06), transparent), var(--bg); color:#e6eef8}
+    .wrap{max-width:1100px;margin:36px auto;padding:28px;display:grid;grid-template-columns:1fr 420px;gap:26px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    header{display:flex;gap:16px;align-items:center;margin-bottom:6px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;box-shadow:0 8px 30px rgba(124,58,237,0.18)}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:4px 0 14px;color:var(--muted)}
+
+    form .row{display:flex;gap:12px;margin-bottom:12px}
+    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+    input[type=text], input[type=number], select, input[type=date]{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:var(--card);color:inherit}
+    .small{width:120px}
+    .controls{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{cursor:pointer;padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;font-weight:600;box-shadow:0 8px 30px rgba(6,182,212,0.08)}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+    .preview{padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+    .goal-title{font-size:18px;margin:0}
+    .big-amount{font-size:28px;font-weight:700;margin-top:6px}
+
+    .progress-wrap{margin-top:14px}
+    .progress{height:14px;background:var(--glass);border-radius:10px;overflow:hidden}
+    .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent1));transition:width .6s ease}
+    .meta{display:flex;justify-content:space-between;margin-top:8px;color:var(--muted);font-size:13px}
+
+    .schedule{margin-top:14px;border-radius:10px;overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;text-align:left;font-size:14px;border-bottom:1px dashed rgba(255,255,255,0.03)}
+    th{color:var(--muted);font-weight:600;font-size:13px}
+
+    .right-column{display:flex;flex-direction:column;gap:18px}
+    .motivation{padding:18px;border-radius:12px;background:linear-gradient(90deg,rgba(124,58,237,0.06),rgba(6,182,212,0.04));min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
+    .phrase{font-size:18px;font-weight:700;margin:0}
+    .subphrase{color:var(--muted);margin-top:8px}
+
+    .saved-list{max-height:200px;overflow:auto}
+    .save-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;margin-bottom:8px;background:rgba(255,255,255,0.01)}
+    .muted{color:var(--muted)}
+
+    footer{grid-column:1/-1;margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    @media (max-width:980px){.wrap{grid-template-columns:1fr;padding:16px}.right-column{order:2}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <div class="logo">AH</div>
+        <div>
+          <h1>Plan de Ahorro — Visual</h1>
+          <p class="lead">Crea metas, divide aportes por quincena, mes o trimestre y mantén el ritmo con frases motivadoras.</p>
+        </div>
+      </header>
+
+      <form id="planForm" onsubmit="event.preventDefault(); generarPlan();">
+        <div class="row">
+          <div style="flex:1">
+            <label for="title">Título del ahorro</label>
+            <input id="title" type="text" placeholder="Ej: iPhone 16, Fondo viaje" required />
+          </div>
+          <div class="small">
+            <label for="amount">Cantidad (COP)</label>
+            <input id="amount" type="text" inputmode="numeric" pattern="[0-9., ]+" placeholder="1000000 o 15.000.000" required />
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="split">Dividir por</label>
+            <select id="split">
+              <option value="quincena">Quincenas (cada 15 días)</option>
+              <option value="mes">Meses (cada mes)</option>
+              <option value="trimestre">Trimestres (cada 3 meses)</option>
+            </select>
+          </div>
+          <div class="small">
+            <label for="payments">Número de pagos</label>
+            <input id="payments" type="number" min="1" placeholder="Ej: 6" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div style="flex:1">
+            <label for="startDate">Fecha de inicio (opcional)</label>
+            <input id="startDate" type="date" />
+          </div>
+          <div class="small">
+            <label>&nbsp;</label>
+            <div class="controls">
+              <button class="btn" type="submit">Generar plan</button>
+              <button class="ghost" type="button" onclick="resetForm()">Limpiar</button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div class="preview" id="preview">
+        <p class="muted">Vista previa rápida</p>
+        <h2 class="goal-title" id="previewTitle">—</h2>
+        <div class="big-amount" id="previewAmount">—</div>
+        <div class="progress-wrap">
+          <div class="progress" aria-hidden>
+            <div class="bar" id="bar" style="width:0%"></div>
+          </div>
+          <div class="meta"><span id="metaLeft">Aporte por periodo: —</span><span id="metaRight">Pagos: —</span></div>
+        </div>
+
+        <div class="schedule" id="scheduleWrap" hidden>
+          <table id="scheduleTable">
+            <thead><tr><th>#</th><th>Fecha</th><th>Aporte</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="savePlan()">Guardar plan</button>
+          <button class="ghost" onclick="markAsProgress()">Marcar aporte como hecho</button>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;color:var(--muted);font-size:13px">
+        Tip: si no pones número de pagos, el formulario calcula 6 por defecto. Puedes guardar tus planes y regresar después.
+      </div>
+
+    </div>
+
+    <div class="right-column">
+      <div class="card motivation">
+        <div>
+          <p class="phrase" id="phrase">Crea tu objetivo y logra el primer paso hoy.</p>
+          <p class="subphrase">Frase motivadora diaria para mantener el ritmo.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Tus planes guardados</h3>
+        <div class="saved-list" id="savedList"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Progreso rápido</h3>
+        <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-weight:700;font-size:18px" id="totalSaved">0</div>
+            <div class="muted">Total ahorrado</div>
+          </div>
+          <div>
+            <div style="text-align:right"><div class="muted">Metas</div><div id="totalGoals">0</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="muted">Diseño atractivo • Animaciones sutiles • Guarda localmente en tu navegador</footer>
+  </div>
+
+  <script>
+    // Datos motivacionales
+    const frases = [
+      "Una meta sin plan es solo un deseo.",
+      "15 minutos de disciplina hoy, menos estrés mañana.",
+      "Pequeños pasos, grandes metas.",
+      "Ahorra con intención y celebra cada logro.",
+      "Cada aporte es un paso más cerca de tu sueño.",
+      "Tu futuro te agradecerá este esfuerzo.",
+      "No es cuánto ganas, es cuánto guardas.",
+      "Convierte el " + "ahorro" + " en un hábito.",
+    ];
+
+    // state
+    let currentPlan = null;
+    const savedKey = 'planes_ahorro_v1';
+
+    function randPhrase(){
+      const p = frases[Math.floor(Math.random()*frases.length)];
+      document.getElementById('phrase').textContent = p;
+    }
+    randPhrase();
+    setInterval(randPhrase, 10000);
+
+    function money(n){
+      return new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(n);
+    }
+    function parseAmount(raw){
+    if(raw === null || raw === undefined) return null;
+    if(typeof raw === 'number') return raw;
+    let s = String(raw).trim();
+    if(!s) return null;
+    // quitar espacios y puntos de miles; aceptar coma decimal
+    s = s.split(' ').join('').split('.').join('').replace(',', '.');
+    const num = Number(s);
+    return isNaN(num) ? null : num;
+    }
+
+    function generarPlan(){
+      const title = document.getElementById('title').value.trim();
+      const rawAmount = document.getElementById('amount').value;
+        const amount = parseAmount(rawAmount);
+      const split = document.getElementById('split').value;
+      const paymentsInput = Number(document.getElementById('payments').value) || 6;
+      const startDateInput = document.getElementById('startDate').value;
+
+      if(!title || !amount || amount<=0){
+        alert('Completa título y cantidad válida.');
+        return;
+      }
+
+      const startDate = startDateInput ? new Date(startDateInput) : new Date();
+      const payments = Math.max(1, Math.floor(paymentsInput));
+
+      // calcular intervalo en días según split
+      let intervalDays = 30; // default mes
+      if(split==='quincena') intervalDays = 15;
+      if(split==='mes') intervalDays = null; // use months increment
+      if(split==='trimestre') intervalDays = null; // use months increment with +3
+
+      const perPayment = Math.ceil(amount / payments);
+      const schedule = [];
+      let cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+
+      for(let i=1;i<=payments;i++){
+        if(split==='mes'){
+          cursor = new Date(startDate.getFullYear(), startDate.getMonth() + (i-1), startDate.getDate());
+        } else if(split==='trimestre'){
+          cursor = new Date(startDate.getFullYear(), startDate.getMonth() + (3*(i-1)), startDate.getDate());
+        } else { // quincena or default day interval
+          cursor = new Date(startDate.getTime() + (intervalDays*(i-1))*24*60*60*1000);
+        }
+        schedule.push({n:i, date:new Date(cursor), amount: perPayment, done:false});
+      }
+
+      currentPlan = {title, amount, split, payments, start: startDate.toISOString().slice(0,10), perPayment, schedule};
+      renderPreview();
+    }
+
+    function renderPreview(){
+      if(!currentPlan) return;
+      document.getElementById('previewTitle').textContent = currentPlan.title;
+      document.getElementById('previewAmount').textContent = money(currentPlan.amount);
+      document.getElementById('metaLeft').textContent = 'Aporte por periodo: ' + money(currentPlan.perPayment);
+      document.getElementById('metaRight').textContent = 'Pagos: ' + currentPlan.payments;
+
+      // schedule table
+      const tbody = document.querySelector('#scheduleTable tbody');
+      tbody.innerHTML = '';
+      let savedCount = 0;
+      currentPlan.schedule.forEach(row => {
+        const tr = document.createElement('tr');
+        const dateStr = row.date.toLocaleDateString('es-CO', {year:'numeric',month:'short',day:'numeric'});
+        tr.innerHTML = `<td>#${row.n}</td><td>${dateStr}</td><td>${money(row.amount)} ${row.done? '✓':' '}</td>`;
+        tbody.appendChild(tr);
+        if(row.done) savedCount += row.amount;
+      });
+      document.getElementById('scheduleWrap').hidden = false;
+
+      // progress bar
+      const totalDone = currentPlan.schedule.filter(s=>s.done).reduce((a,b)=>a+(b.amount||0),0);
+      const percent = Math.min(100, Math.round((totalDone/currentPlan.amount)*100));
+      document.getElementById('bar').style.width = percent + '%';
+
+      // totals box
+      updateTotalsUI();
+    }
+
+    function resetForm(){
+      document.getElementById('planForm').reset();
+      currentPlan = null;
+      document.getElementById('previewTitle').textContent = '—';
+      document.getElementById('previewAmount').textContent = '—';
+      document.getElementById('metaLeft').textContent = 'Aporte por periodo: —';
+      document.getElementById('metaRight').textContent = 'Pagos: —';
+      document.querySelector('#scheduleTable tbody').innerHTML = '';
+      document.getElementById('scheduleWrap').hidden = true;
+      document.getElementById('bar').style.width = '0%';
+    }
+
+    // persistence
+    function loadSaved(){
+      const raw = localStorage.getItem(savedKey);
+      return raw? JSON.parse(raw): [];
+    }
+    function saveSaved(arr){ localStorage.setItem(savedKey, JSON.stringify(arr)); }
+
+    function savePlan(){
+      if(!currentPlan){ alert('Genera primero un plan.'); return; }
+      const arr = loadSaved();
+      arr.push(currentPlan);
+      saveSaved(arr);
+      renderSaved();
+      alert('Plan guardado.');
+    }
+
+    function renderSaved(){
+      const container = document.getElementById('savedList');
+      const arr = loadSaved();
+      container.innerHTML = '';
+      document.getElementById('totalGoals').textContent = arr.length;
+      let totalSaved = 0;
+
+      arr.forEach((p, idx)=>{
+        const div = document.createElement('div');
+        div.className = 'save-item';
+        const left = document.createElement('div');
+        left.innerHTML = `<div style="font-weight:700">${p.title}</div><div class="muted">${money(p.amount)} — ${p.payments} pagos</div>`;
+        const right = document.createElement('div');
+        right.style.display='flex'; right.style.gap='8px';
+        const open = document.createElement('button'); open.className='ghost'; open.textContent='Abrir'; open.onclick = ()=>{ currentPlan = p; renderPreview(); };
+        const del = document.createElement('button'); del.className='ghost'; del.textContent='Eliminar'; del.onclick = ()=>{ if(confirm('Eliminar este plan?')){ arr.splice(idx,1); saveSaved(arr); renderSaved(); resetForm(); } };
+        right.appendChild(open); right.appendChild(del);
+        div.appendChild(left); div.appendChild(right);
+        container.appendChild(div);
+
+        // calculate saved from done marks
+        const savedFromP = (p.schedule||[]).filter(s=>s.done).reduce((a,b)=>a+(b.amount||0),0);
+        totalSaved += savedFromP;
+      });
+      document.getElementById('totalSaved').textContent = money(totalSaved);
+    }
+
+    function markAsProgress(){
+      if(!currentPlan){ alert('Abre o genera un plan primero.'); return; }
+      // mark first unpaid as done
+      const first = currentPlan.schedule.find(s=>!s.done);
+      if(!first) { alert('Todos los pagos ya están marcados.'); return; }
+      first.done = true;
+      renderPreview();
+      // if this plan is saved, update storage
+      const arr = loadSaved();
+      const ix = arr.findIndex(p=>p.title===currentPlan.title && p.amount===currentPlan.amount && p.start===currentPlan.start);
+      if(ix>=0){ arr[ix] = currentPlan; saveSaved(arr); renderSaved(); }
+    }
+
+    // init
+    renderSaved();
+
+    function updateTotalsUI(){
+      const arr = loadSaved();
+      document.getElementById('totalGoals').textContent = arr.length;
+      const totalSaved = arr.reduce((a,p)=> a + (p.schedule||[]).filter(s=>s.done).reduce((x,y)=>x+(y.amount||0),0), 0);
+      document.getElementById('totalSaved').textContent = money(totalSaved);
+    }
+
+    // small helper to format money for preview initial
+    document.getElementById('amount').addEventListener('input', e=>{
+      const v = Number(e.target.value)||0;
+      document.getElementById('previewAmount').textContent = v? money(v): '—';
+    });
+
+    // seed demo
+    if(!loadSaved().length){
+      // no seed to keep it simple
+    }
+  </script>
+</body>
+</html>
